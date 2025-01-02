@@ -18,7 +18,7 @@ df_eficiencia = pd.read_csv('eficiencia.csv',sep=';',encoding='cp1252')
 
 
 # construção da barra lateral
-st.sidebar.image('ifpa_logo.png', use_column_width=True)
+st.sidebar.image('ifpa_logo.png', use_container_width=True)
 st.sidebar.markdown("""
     # PNP Prévia IFPA 2024
     """)
