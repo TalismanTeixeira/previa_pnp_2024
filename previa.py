@@ -355,10 +355,11 @@ def matriculas_equivalentes_por_tipo_eixo_curso():
 
 def rap():
     st.markdown('# '+ painel_escolhido)
+    st.markdown('# Em Manutenção')
     meq_rap_por_campus = df.groupby('Campus')['meqrap'].sum().reset_index()
-    fig4 = px.bar(meq_rap_por_campus, x='Campus', y='meqrap', color='Campus')
-    fig4.update_layout(showlegend=False)
-    st.plotly_chart(fig4,use_container_width=True)
+    #fig4 = px.bar(meq_rap_por_campus, x='Campus', y='meqrap', color='Campus')
+    #fig4.update_layout(showlegend=False)
+    #st.plotly_chart(fig4,use_container_width=True)
 
 
 def eficiencia_academica():
