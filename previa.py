@@ -14,7 +14,7 @@ df['meqrap'] = df['meqrap'].str.replace(',','.').astype(float)
 #ajustes no df
 df['Campus'] = df['Campus'].str.upper()
 df['DS_EIXO_TECNOLOGICO'] = df['DS_EIXO_TECNOLOGICO'].fillna('-')
-df_eficiencia = pd.read_csv('eficiencia.csv',sep=';',encoding='ansi')
+df_eficiencia = pd.read_csv('eficiencia.csv',sep=';',encoding='cp1252')
 
 
 # construção da barra lateral
