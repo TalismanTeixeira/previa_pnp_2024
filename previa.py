@@ -18,12 +18,13 @@ df_eficiencia = pd.read_csv('eficiencia.csv',sep=';',encoding='cp1252')
 
 
 # construção da barra lateral
-st.sidebar.image('ifpa_logo.png', use_container_width=True)
-st.sidebar.markdown("""
-    # PNP Prévia IFPA 2024
+col1,col2, col3=st.columns([1,4,9])
+col1.image('ifpa_logo.png')
+col3.markdown("""
+    #       PNP Prévia IFPA 2024
     """)
 painel = ['Matrículas por campus','Matrículas por tipo, eixo e curso','Matrículas equivalentes por campus','Matrículas equivalentes por tipo, eixo e curso', 'RAP', 'Eficiência Acadêmica']
-painel_escolhido = st.sidebar.selectbox('Selecione o Painel desejado:', painel)
+painel_escolhido = st.selectbox('Selecione o Painel desejado:', painel)
 
 def matriculas_por_campus():
     st.markdown('# '+ painel_escolhido)
@@ -76,19 +77,16 @@ def matriculas_por_campus():
                 df_campus = df[(df['DS_TIPO_CURSO'] == tipo) & (df['DS_EIXO_TECNOLOGICO'] == eixo)&(df['NO_CURSO'] == curso)]
                 df_figura = df_campus.groupby('Campus')['Nome'].count().reset_index()
 
+
+    col1,col2,col3 = st.columns([1,1,9])
     total = df_figura['Nome'].sum()
     fig2 = go.Figure()
     fig2.add_trace(go.Indicator(value=total, number={"valueformat": ".0f"},title={'text':'TOTAL', 'font':{'family':'Times New Roman','size':48}}))
-    st.sidebar.plotly_chart(fig2,use_container_width=True)
+    col1.plotly_chart(fig2)
     fig1 = px.treemap(df_figura, path=[px.Constant('IFPA'), 'Campus'], values='Nome', color='Campus', height=800)
     fig1.data[0].textinfo = 'label+text+value'
     fig1.layout.hovermode = False
-    
-
-    
-
-    
-    st.plotly_chart(fig1,use_container_width=True)
+    col3.plotly_chart(fig1)
     
 def matriculas_por_tipo_eixo_curso():
     st.markdown('# '+ painel_escolhido)
@@ -433,13 +431,7 @@ def eficiencia_academica():
 
     status2.columns=['Campus','Concluidos','Em Curso','Evadidos','Total','Conc. (%)','Ret. (%)','Evad. (%)','Eficiência (%)']
 
-    
-    fig5 = px.bar(status2, x='Campus', y='Eficiência (%)', color='Campus')
-    fig5.update_layout(showlegend=False)
-    st.plotly_chart(fig5,use_container_width=True)
-    st.divider()
-    st.dataframe(status2.set_index('Campus'))
-
+    col1,col2,col3 = st.columns([1,1,9])
     concluidos = status2['Concluidos'].sum()
     em_curso = status2['Em Curso'].sum()
     evadidos = status2['Evadidos'].sum()
@@ -449,7 +441,18 @@ def eficiencia_academica():
     evad_perc = evadidos/total
     eficiencia = conc_perc+(conc_perc*ret_perc)/(conc_perc+evad_perc)
     eficiencia = round(eficiencia*100,2)
-    st.sidebar.metric("Eficiência Geral", eficiencia)
+    fig6 = go.Figure()
+    fig6.add_trace(go.Indicator(value=eficiencia, number={"suffix": "%"},title={'text':'TOTAL', 'font':{'family':'Times New Roman','size':48}}))
+    col1.plotly_chart(fig6)
+    #col1.metric(label="Eficiência Geral", value=eficiencia,border=True)
+
+    fig5 = px.bar(status2, x='Campus', y='Eficiência (%)', color='Campus')
+    fig5.update_layout(showlegend=False)
+    col3.plotly_chart(fig5,use_container_width=True)
+    st.divider()
+    col1,col2,col3 = st.columns([3,7,1])
+    col2.dataframe(status2.set_index('Campus'))
+
 
 page_names_to_funcs = {
     'Matrículas por campus': matriculas_por_campus,
