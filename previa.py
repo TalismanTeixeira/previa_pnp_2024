@@ -15,11 +15,12 @@ df['meqrap'] = df['meqrap'].str.replace(',','.').astype(float)
 df['Campus'] = df['Campus'].str.upper()
 df['DS_EIXO_TECNOLOGICO'] = df['DS_EIXO_TECNOLOGICO'].fillna('-')
 df_eficiencia = pd.read_csv('eficiencia.csv',sep=';',encoding='cp1252')
+df_eficiencia = df_eficiencia.fillna(0.0)
 
 
 # construção da barra lateral
 col1,col2, col3=st.columns([1,4,9])
-col1.image('ifpa_logo.png',use_container_width=True)
+col1.image('ifpa_logo.png'  )
 col3.markdown("""
     #       PNP Prévia IFPA 2024
     """)
@@ -355,24 +356,25 @@ def matriculas_equivalentes_por_tipo_eixo_curso():
 
 def rap():
     st.markdown('# '+ painel_escolhido)
-    st.markdown('# Em Manutenção')
+
     meq_rap_por_campus = df.groupby('Campus')['meqrap'].sum().reset_index()
-    #fig4 = px.bar(meq_rap_por_campus, x='Campus', y='meqrap', color='Campus')
-    #fig4.update_layout(showlegend=False)
-    #st.plotly_chart(fig4,use_container_width=True)
+    fig4 = px.bar(meq_rap_por_campus, x='Campus', y='meqrap', color='Campus')
+    fig4.update_layout(showlegend=False)
+    st.plotly_chart(fig4,use_container_width=True)
 
 
 def eficiencia_academica():
-    status = df_eficiencia.groupby(['CO_CICLO_MATRICULA','NOME_CURSO','TIPO_CURSO','EIXO_TECNOLOGICO','campus','NO_STATUS_MATRICULA'])['CO_ALUNO'].count().reset_index()
-    status.columns=['Código do ciclo','Nome do Curso','Tipo de Curso','Eixo Tecnológico','Campus','Status','Quantidade']
-    status.groupby(['Código do ciclo','Nome do Curso','Tipo de Curso','Eixo Tecnológico','Campus'])['Quantidade'].sum().reset_index()
-    status = status.set_index(['Código do ciclo','Nome do Curso','Tipo de Curso','Eixo Tecnológico','Campus','Status']).squeeze().unstack('Status').reset_index()
+    status = df_eficiencia.groupby(['CO_CICLO_MATRICULA','NOME_CURSO','TIPO_CURSO','EIXO_TECNOLOGICO','campus','NO_STATUS_MATRICULA','CO_TIPO_OFERTA_CURSO'])['CO_ALUNO'].count().reset_index()
+    status.columns=['Código do ciclo','Nome do Curso','Tipo de Curso','Eixo Tecnológico','Campus','Status','Tipo de Oferta','Quantidade']
+    status.groupby(['Código do ciclo','Nome do Curso','Tipo de Curso','Eixo Tecnológico','Campus','Tipo de Oferta'])['Quantidade'].sum().reset_index()
+    status = status.set_index(['Código do ciclo','Nome do Curso','Tipo de Curso','Eixo Tecnológico','Campus','Status','Tipo de Oferta']).squeeze().unstack('Status').reset_index()
     status = status.fillna(0)
     st.markdown('# '+ painel_escolhido)
     
     tipos_de_curso = ['TODOS'] + sorted(df_eficiencia['TIPO_CURSO'].unique())
     eixos_tecnologicos = ['TODOS'] + sorted(df_eficiencia['EIXO_TECNOLOGICO'].unique())
     nomes_de_curso = ['TODOS'] + sorted(df_eficiencia['NOME_CURSO'].unique())
+    tipo_de_oferta = ['TODOS','INTEGRADO','SUBSEQUENTE','EJA']
     tipo = st.selectbox('Selecione o tipo de curso:', tipos_de_curso)
     if tipo == 'TODOS':
         df_tipo = df_eficiencia
@@ -387,37 +389,48 @@ def eficiencia_academica():
         df_eixo = df_tipo[df_tipo['EIXO_TECNOLOGICO'] == eixo]
         nomes_de_curso = ['TODOS'] + sorted(df_eixo['NOME_CURSO'].unique())
     curso = st.selectbox('Selecione o curso:', nomes_de_curso)
+    tipo_de_oferta = st.selectbox('Selecione o tipo de oferta:', tipo_de_oferta)
+    if tipo_de_oferta == 'INTEGRADO':
+        codigo_tipo_de_oferta = 1.0
+    elif tipo_de_oferta == 'SUBSEQUENTE':
+        codigo_tipo_de_oferta = 3.0
+    elif tipo_de_oferta == 'EJA':
+        codigo_tipo_de_oferta = 2.0
+    else:
+        codigo_tipo_de_oferta = 0.0
 
     if tipo == 'TODOS':
         if eixo == 'TODOS':
             if curso == 'TODOS':
-                df_figura = status.groupby('Campus')[['CONCLUIDOS','EM_CURSO','EVADIDOS']].sum().reset_index()
+                df_campus=status
             else:
                 df_campus = status[status['Nome do Curso'] == curso]
-                df_figura = df_campus.groupby('Campus')[['CONCLUIDOS','EM_CURSO','EVADIDOS']].sum().reset_index()
+                
         else:
             if curso == 'TODOS':
                 df_campus = status[status['Eixo Tecnológico'] == eixo]
-                df_figura = df_campus.groupby('Campus')[['CONCLUIDOS','EM_CURSO','EVADIDOS']].sum().reset_index()
+                
             else:
                 df_campus = status[(status['Eixo Tecnológico'] == eixo)&(status['Nome do Curso'] == curso)]
-                df_figura = df_campus.groupby('Campus')[['CONCLUIDOS','EM_CURSO','EVADIDOS']].sum().reset_index()
+                
     else:
         if eixo == 'TODOS':
             if curso == 'TODOS':
                 df_campus = status[status['Tipo de Curso'] == tipo]
-                df_figura = df_campus.groupby('Campus')[['CONCLUIDOS','EM_CURSO','EVADIDOS']].sum().reset_index()
+                
             else:
                 df_campus = status[(status['Tipo de Curso'] == tipo)&(status['Nome do Curso'] == curso)]
-                df_figura = df_campus.groupby('Campus')[['CONCLUIDOS','EM_CURSO','EVADIDOS']].sum().reset_index()
+                
         else:
             if curso == 'TODOS':
                 df_campus = status[(status['Tipo de Curso'] == tipo) & (status['Eixo Tecnológico'] == eixo)]
-                df_figura = df_campus.groupby('Campus')[['CONCLUIDOS','EM_CURSO','EVADIDOS']].sum().reset_index()
+                
             else:
                 df_campus = status[(status['Tipo de Curso'] == tipo) & (status['Eixo Tecnológico'] == eixo)&(status['Nome do Curso'] == curso)]
-                df_figura = df_campus.groupby('Campus')[['CONCLUIDOS','EM_CURSO','EVADIDOS']].sum().reset_index()
+    if codigo_tipo_de_oferta != 0.0:
+        df_campus = df_campus[df_campus['Tipo de Oferta'] == codigo_tipo_de_oferta]                
 
+    df_figura = df_campus.groupby('Campus')[['CONCLUIDOS','EM_CURSO','EVADIDOS']].sum().reset_index()
     status2 = df_figura
     status2['total']= status2['CONCLUIDOS']+status2['EM_CURSO']+status2['EVADIDOS']
     status2['conc_perc']=status2['CONCLUIDOS']/status2['total']
