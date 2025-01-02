@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 
 st.set_page_config(layout="wide")
 # leitura do banco de dados
-df = pd.read_csv('base_de_dados_previa.csv',encoding='ansi',sep=';')
+df = pd.read_csv('base_de_dados_previa.csv',encoding='cp1252',sep=';')
 df['meq'] = df['meq'].str.replace(',','.').astype(float)
 df['meqrap'] = df['meqrap'].str.replace(',','.').astype(float)
 #ajustes no df
