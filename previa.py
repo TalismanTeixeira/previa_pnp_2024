@@ -394,13 +394,15 @@ def rap():
     fig5.add_hline(y=20.0, line_width=3, line_dash="dash", line_color="green")
     st.plotly_chart(fig5,use_container_width=True)
     
-    
 def eficiencia_academica():
-    status = df_eficiencia.groupby(['CO_CICLO_MATRICULA','NOME_CURSO','TIPO_CURSO','EIXO_TECNOLOGICO','campus','NO_STATUS_MATRICULA','CO_TIPO_OFERTA_CURSO'])['CO_ALUNO'].count().reset_index()
-    status.columns=['Código do ciclo','Nome do Curso','Tipo de Curso','Eixo Tecnológico','Campus','Status','Tipo de Oferta','Quantidade']
-    status.groupby(['Código do ciclo','Nome do Curso','Tipo de Curso','Eixo Tecnológico','Campus','Tipo de Oferta'])['Quantidade'].sum().reset_index()
-    status = status.set_index(['Código do ciclo','Nome do Curso','Tipo de Curso','Eixo Tecnológico','Campus','Status','Tipo de Oferta']).squeeze().unstack('Status').reset_index()
+    
+    df_eficiencia['DT_DATA_INICIO'] = pd.to_datetime(df_eficiencia['DT_DATA_INICIO'])
+    df_eficiencia['DT_DATA_FIM_PREVISTO'] = pd.to_datetime(df_eficiencia['DT_DATA_FIM_PREVISTO'])
+    status = df_eficiencia.groupby(['CO_CICLO_MATRICULA','NOME_CURSO','TIPO_CURSO','EIXO_TECNOLOGICO','campus','NO_STATUS_MATRICULA','CO_TIPO_OFERTA_CURSO','DT_DATA_INICIO','DT_DATA_FIM_PREVISTO'])['CO_ALUNO'].count().reset_index()
+    status.columns=['Código do ciclo','Nome do Curso','Tipo de Curso','Eixo Tecnológico','Campus','Status','Tipo de Oferta', 'Data de Início', 'Data de Fim Previsto','Quantidade']
+    status = status.set_index(['Código do ciclo','Nome do Curso','Tipo de Curso','Eixo Tecnológico','Campus','Status','Tipo de Oferta', 'Data de Início', 'Data de Fim Previsto']).squeeze().unstack('Status').reset_index()
     status = status.fillna(0)
+    
     st.markdown('# '+ painel_escolhido)
     
     tipos_de_curso = ['TODOS'] + sorted(df_eficiencia['TIPO_CURSO'].unique())
@@ -464,6 +466,7 @@ def eficiencia_academica():
 
     df_figura = df_campus.groupby('Campus')[['CONCLUIDOS','EM_CURSO','EVADIDOS']].sum().reset_index()
     status2 = df_figura
+    
     status2['total']= status2['CONCLUIDOS']+status2['EM_CURSO']+status2['EVADIDOS']
     status2['conc_perc']=status2['CONCLUIDOS']/status2['total']
     status2['ret_perc']=status2['EM_CURSO']/status2['total']
@@ -495,9 +498,40 @@ def eficiencia_academica():
     fig5 = px.bar(status2, x='Campus', y='Eficiência (%)', color='Campus')
     fig5.update_layout(showlegend=False)
     col3.plotly_chart(fig5,use_container_width=True)
-    st.divider()
+   
     col1,col2,col3 = st.columns([3,7,1])
     col2.dataframe(status2.set_index('Campus'))
+    
+    st.divider()
+
+    lista_de_campus = ['TODOS'] + sorted(df_eficiencia['campus'].unique())
+    campus = st.selectbox('Selecione o campus desejado para detalhar:', lista_de_campus)
+    if campus == 'TODOS':
+        df_eficiencia_filtrado_por_campus = df_eficiencia
+    else:
+        df_eficiencia_filtrado_por_campus = df_eficiencia[df_eficiencia['campus'] == campus]
+    status3 = df_eficiencia_filtrado_por_campus.groupby(['CO_CICLO_MATRICULA','NOME_CURSO','TIPO_CURSO','EIXO_TECNOLOGICO','campus','NO_STATUS_MATRICULA','CO_TIPO_OFERTA_CURSO','DT_DATA_INICIO','DT_DATA_FIM_PREVISTO'])['CO_ALUNO'].count().reset_index()
+    status3.columns=['Código do ciclo','Nome do Curso','Tipo de Curso','Eixo Tecnológico','Campus','Status','Tipo de Oferta', 'Data de Início', 'Data de Fim Previsto','Quantidade']
+    status3 = status3.set_index(['Código do ciclo','Nome do Curso','Tipo de Curso','Eixo Tecnológico','Campus','Status','Tipo de Oferta', 'Data de Início', 'Data de Fim Previsto']).squeeze().unstack('Status').reset_index()
+    status3 = status3.fillna(0)
+    status3['total']= status3['CONCLUIDOS']+status3['EM_CURSO']+status3['EVADIDOS']
+    status3['conc_perc']=status3['CONCLUIDOS']/status3['total']
+    status3['ret_perc']=status3['EM_CURSO']/status3['total']
+    status3['evad_perc']=status3['EVADIDOS']/status3['total']
+    status3['eficiencia'] = status3['conc_perc']+(status3['conc_perc']*status3['ret_perc'])/(status3['conc_perc']+status3['evad_perc'])
+    status3 = status3.fillna(0)
+    status3['conc_perc'] = round(status3['conc_perc']*100,2)
+    status3['ret_perc'] = round(status3['ret_perc']*100,2)
+    status3['evad_perc'] = round(status3['evad_perc']*100,2)
+    status3['eficiencia'] = round(status3['eficiencia']*100,2)
+    status3 = status3.set_index('Código do ciclo')
+    status3=status3[['Nome do Curso','Tipo de Curso','Eixo Tecnológico','Data de Início','Data de Fim Previsto','CONCLUIDOS','EM_CURSO','EVADIDOS','total','conc_perc','ret_perc','evad_perc','eficiencia']]
+    status3.columns=['Nome do Curso','Tipo de Curso','Eixo Tecnológico','Data de Início','Data de Fim Previsto','Concluidos','Em Curso','Evadidos','Total','Conc. (%)','Ret. (%)','Evad. (%)','Eficiência (%)']
+    st.dataframe(status3)
+    
+    #df_figura = df_eficiencia_filtrado_por_campus.groupby(['DT_DATA_INICIO','DT_DATA_FIM_PREVISTO'])[['CONCLUIDOS','EM_CURSO','EVADIDOS']].sum().reset_index()
+    #df_figura
+
 
 
 page_names_to_funcs = {
