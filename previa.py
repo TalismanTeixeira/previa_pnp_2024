@@ -16,7 +16,10 @@ df['Campus'] = df['Campus'].str.upper()
 df['DS_EIXO_TECNOLOGICO'] = df['DS_EIXO_TECNOLOGICO'].fillna('-')
 df_eficiencia = pd.read_csv('eficiencia.csv',sep=';',encoding='cp1252')
 df_eficiencia = df_eficiencia.fillna(0.0)
-
+df_docentes = pd.read_excel('docentes.xlsx')
+df_docentes_por_campus = df_docentes.groupby('Campus')['contagem'].sum().reset_index()
+df_docentes_por_campus = df_docentes_por_campus.rename(columns={'Campus':'Campus','contagem':'docentes'})
+df_docentes_por_campus['Campus'] = df_docentes_por_campus['Campus'].str.upper()
 
 # construção da barra lateral
 col1,col2, col3=st.columns([1,4,9])
@@ -356,13 +359,40 @@ def matriculas_equivalentes_por_tipo_eixo_curso():
 
 def rap():
     st.markdown('# '+ painel_escolhido)
-
+    df_presencial = df[df['Modalidade'] == 'PRESENCIAL']
     meq_rap_por_campus = df.groupby('Campus')['meqrap'].sum().reset_index()
-    fig4 = px.bar(meq_rap_por_campus, x='Campus', y='meqrap', color='Campus')
+    meq_rap_presencial_por_campus = df_presencial.groupby('Campus')['meqrap'].sum().reset_index()
+    rap = meq_rap_por_campus.merge(df_docentes_por_campus, how='left', on='Campus')
+    rap_presencial = meq_rap_presencial_por_campus.merge(df_docentes_por_campus, how='left', on='Campus')
+    rap['RAP'] = rap['meqrap'] / rap['docentes']
+    rap_presencial['RAP'] = rap_presencial['meqrap'] / rap_presencial['docentes']
+    rap = rap.sort_values('RAP',ascending=False)
+    rap_presencial = rap_presencial.sort_values('RAP',ascending=False)
+
+    matriculas_equivalentes_totais = rap['meqrap'].sum()
+    docentes_equivalentes_totais = rap['docentes'].sum()
+    rap_total = matriculas_equivalentes_totais / docentes_equivalentes_totais
+    matriculas_equivalentes_presenciais_totais = rap_presencial['meqrap'].sum()
+    docentes_equivalentes_presenciais_totais = rap_presencial['docentes'].sum()
+    rap_presencial_total = matriculas_equivalentes_presenciais_totais / docentes_equivalentes_presenciais_totais
+    st.write('**RAP Total**: {:.2f}'.format(rap_total))
+    st.write('**RAP Presencial Total**: {:.2f}'.format(rap_presencial_total))
+    
+    st.divider()
+
+    fig4 = px.bar(rap, x='Campus', y='RAP', color='RAP', title='RAP por Campus')
     fig4.update_layout(showlegend=False)
+    fig4.add_hline(y=20.0, line_width=3, line_dash="dash", line_color="green")
     st.plotly_chart(fig4,use_container_width=True)
-
-
+    
+    st.divider()
+    
+    fig5 = px.bar(rap_presencial, x='Campus', y='RAP', color='RAP', title='RAP presencial por Campus')
+    fig5.update_layout(showlegend=False)
+    fig5.add_hline(y=20.0, line_width=3, line_dash="dash", line_color="green")
+    st.plotly_chart(fig5,use_container_width=True)
+    
+    
 def eficiencia_academica():
     status = df_eficiencia.groupby(['CO_CICLO_MATRICULA','NOME_CURSO','TIPO_CURSO','EIXO_TECNOLOGICO','campus','NO_STATUS_MATRICULA','CO_TIPO_OFERTA_CURSO'])['CO_ALUNO'].count().reset_index()
     status.columns=['Código do ciclo','Nome do Curso','Tipo de Curso','Eixo Tecnológico','Campus','Status','Tipo de Oferta','Quantidade']
