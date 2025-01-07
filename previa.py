@@ -525,8 +525,12 @@ def eficiencia_academica():
     status3['evad_perc'] = round(status3['evad_perc']*100,2)
     status3['eficiencia'] = round(status3['eficiencia']*100,2)
     status3 = status3.set_index('Código do ciclo')
-    status3=status3[['Nome do Curso','Tipo de Curso','Eixo Tecnológico','Data de Início','Data de Fim Previsto','CONCLUIDOS','EM_CURSO','EVADIDOS','total','conc_perc','ret_perc','evad_perc','eficiencia']]
-    status3.columns=['Nome do Curso','Tipo de Curso','Eixo Tecnológico','Data de Início','Data de Fim Previsto','Concluidos','Em Curso','Evadidos','Total','Conc. (%)','Ret. (%)','Evad. (%)','Eficiência (%)']
+    status3['Data de Início'] = status3['Data de Início'].dt.strftime('%d/%m/%Y')
+    status3['Data de Fim Previsto'] = status3['Data de Fim Previsto'].dt.strftime('%d/%m/%Y')
+    status3=status3[['Nome do Curso','Tipo de Curso','Eixo Tecnológico','Tipo de Oferta','Data de Início','Data de Fim Previsto','CONCLUIDOS','EM_CURSO','EVADIDOS','total','conc_perc','ret_perc','evad_perc','eficiencia']]
+    status3.columns=['Nome do Curso','Tipo de Curso','Eixo Tecnológico','Tipo de Oferta','Data de Início','Data de Fim Previsto','Concluidos','Em Curso','Evadidos','Total','Conc. (%)','Ret. (%)','Evad. (%)','Eficiência (%)']
+    status3['Tipo de Oferta'] = status3['Tipo de Oferta'].map({1:'Integrado',2:'EJA',3:'Subsequente',None:''})
+    status3=status3.fillna(' ')
     st.dataframe(status3)
     
     #df_figura = df_eficiencia_filtrado_por_campus.groupby(['DT_DATA_INICIO','DT_DATA_FIM_PREVISTO'])[['CONCLUIDOS','EM_CURSO','EVADIDOS']].sum().reset_index()
